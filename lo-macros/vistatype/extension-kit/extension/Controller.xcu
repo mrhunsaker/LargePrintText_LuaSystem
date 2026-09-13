@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oor:component-data xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" oor:name="Controller" oor:package="org.openoffice.Office.UI">
+  <node oor:name="Registered">
+    <node oor:name="ToolBar">
+      <node oor:name="LP_VISTATYPE_Controller" oor:op="replace">
+        <prop oor:name="Command" oor:type="xs:string"><value>vnd.mrhunsaker.vistatype:LP_VISTATYPE</value></prop>
+        <prop oor:name="Module" oor:type="xs:string"><value>com.sun.star.text.TextDocument</value></prop>
+        <prop oor:name="Controller" oor:type="xs:string"><value>org.mrhunsaker.vistatype.LPVISTATYPEController</value></prop>
+      </node>
+    </node>
+  </node>
+</oor:component-data>
