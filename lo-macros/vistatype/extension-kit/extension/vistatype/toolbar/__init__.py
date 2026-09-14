@@ -1,1 +1,0 @@
-"""Toolbar integration for VISTATYPE."""

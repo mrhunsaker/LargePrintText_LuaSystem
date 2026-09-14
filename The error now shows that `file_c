@@ -1,0 +1,206 @@
+The error now shows that **`file_cleanup.py`** (and likely other files in the `lp/` and `dx/` subdirectories) is also using **relative imports**, which fail in LibreOffice’s Python environment. Since the entire `vistatype` package uses relative imports, we need to **modify all files** in the `lp/` and `dx/` subdirectories to use **absolute imports** and ensure the `vistatype` package is in `sys.path`.
+
+---
+
+---
+
+## 🔧 **Root Cause**
+The error:
+```
+ImportError: attempted relative import with no known parent package (or 'utils' is unknown)
+```
+occurs because:
+- `file_cleanup.py` (and other files in `lp/` and `dx/`) use **relative imports** like `from . import utils`.
+- LibreOffice’s Python environment **does not recognize the `vistatype` package structure** correctly, so these imports fail.
+
+---
+
+---
+---
+
+## ✅ **Solution: Modify All Files to Use Absolute Imports**
+We need to **update all Python files** in the `vistatype/` directory to:
+1. **Add the `Scripts/python/` directory to `sys.path`** (if not already done).
+2. **Replace relative imports** (e.g., `from . import utils`) with **absolute imports** (e.g., `from vistatype import utils`).
+
+---
+
+### **Step 1: Modify All Files in `lp/` and `dx/`**
+For **every file** in `lp/` and `dx/` that uses relative imports (e.g., `from . import utils`), replace the imports with absolute ones and add the `sys.path` fix.
+
+#### **Example: Fix `lp/file_cleanup.py`**
+Find this line in `lp/file_cleanup.py`:
+```python
+from . import utils
+```
+Replace it with:
+```python
+import sys
+import os
+
+# Ensure the vistatype package is importable
+this_dir = os.path.dirname(os.path.abspath(__file__))
+scripts_dir = os.path.dirname(os.path.dirname(this_dir))  # Go up to Scripts/python/
+if scripts_dir not in sys.path:
+    sys.path.insert(0, scripts_dir)
+
+from vistatype import utils
+```
+
+---
+#### **Example: Fix `dx/file_cleanup.py`**
+Find this line in `dx/file_cleanup.py`:
+```python
+from . import utils
+```
+Replace it with:
+```python
+import sys
+import os
+
+# Ensure the vistatype package is importable
+this_dir = os.path.dirname(os.path.abspath(__file__))
+scripts_dir = os.path.dirname(os.path.dirname(this_dir))  # Go up to Scripts/python/
+if scripts_dir not in sys.path:
+    sys.path.insert(0, scripts_dir)
+
+from vistatype import utils
+```
+
+---
+### **Step 2: Apply the Same Fix to All Files**
+Repeat the process for **all files** in:
+- `lp/`
+  - `attach_template.py`
+  - `file_cleanup.py`
+  - `formatting_tools.py`
+  - `reference_pages.py`
+- `dx/`
+  - `file_cleanup.py`
+  - `formatting_tools.py`
+  - `reference_pages.py`
+
+For each file:
+1. **Add the `sys.path` fix** at the top (if the file uses relative imports).
+2. **Replace relative imports** (e.g., `from . import utils`) with absolute imports (e.g., `from vistatype import utils`).
+
+---
+### **Step 3: Special Case for `utils.py`**
+If `utils.py` is imported by other files, ensure it **does not use relative imports**. For example, if `utils.py` has:
+```python
+from . import shared
+```
+Replace it with:
+```python
+import sys
+import os
+
+# Ensure the vistatype package is importable
+this_dir = os.path.dirname(os.path.abspath(__file__))
+scripts_dir = os.path.dirname(this_dir)  # Go up to Scripts/python/vistatype/
+if scripts_dir not in sys.path:
+    sys.path.insert(0, scripts_dir)
+
+from vistatype import shared
+```
+
+---
+### **Step 4: Save All Files**
+Save all modified files in their respective locations under:
+```
+~/.config/libreoffice/4/user/Scripts/python/vistatype/
+```
+
+---
+### **Step 5: Restart LibreOffice**
+Close and reopen LibreOffice to **reload all modified scripts**.
+
+---
+### **Step 6: Test All Macros**
+Try running **any macro** from the toolbar or **Tools → Macros → Run Macro**. The import errors should now be resolved.
+
+---
+---
+---
+
+## 📌 **Alternative: Batch Fix with a Script**
+If you have many files to update, you can use this **Python script** to automatically replace relative imports with absolute ones:
+
+### **Run This Script in Your Terminal**
+```bash
+cd ~/.config/libreoffice/4/user/Scripts/python/vistatype/
+python3 -c "
+import os
+import re
+
+# Walk through all Python files in the vistatype directory
+for root, dirs, files in os.walk('.'):
+    for file in files:
+        if file.endswith('.py'):
+            filepath = os.path.join(root, file)
+            with open(filepath, 'r') as f:
+                content = f.read()
+
+            # Replace relative imports like 'from . import X' with 'from vistatype import X'
+            new_content = re.sub(
+                r'from \. import ([a-zA-Z0-9_, ]+)',
+                r'from vistatype import \1',
+                content
+            )
+
+            # Add sys.path fix at the top if the file uses relative imports
+            if 'from . import' in content or 'from .. import' in content:
+                sys_path_fix = '''import sys
+import os
+
+# Ensure the vistatype package is importable
+this_dir = os.path.dirname(os.path.abspath(__file__))
+scripts_dir = os.path.dirname(this_dir)
+if scripts_dir not in sys.path:
+    sys.path.insert(0, scripts_dir)
+'''
+                if 'import sys' not in content:
+                    new_content = sys_path_fix + '\n' + new_content
+
+            with open(filepath, 'w') as f:
+                f.write(new_content)
+"
+```
+
+---
+### **What the Script Does**
+1. **Finds all `.py` files** in the `vistatype/` directory.
+2. **Replaces relative imports** (e.g., `from . import utils`) with absolute imports (e.g., `from vistatype import utils`).
+3. **Adds the `sys.path` fix** to the top of any file that uses relative imports.
+
+---
+### **Step 7: Restart LibreOffice Again**
+After running the script, restart LibreOffice and test the macros.
+
+---
+---
+---
+## ✅ **Final Checklist**
+| Task | Done? |
+|------|-------|
+| Modified `entrypoints.py` to use absolute imports and `sys.path`. | ☐ |
+| Modified all files in `lp/` and `dx/` to use absolute imports. | ☐ |
+| Added `sys.path` fix to all files that use relative imports. | ☐ |
+| Ran the batch fix script (optional). | ☐ |
+| Restarted LibreOffice. | ☐ |
+| Tested all macros (e.g., `LP_AutoTag_Page_Numbers`, `Dx_File_Fix_Sequence`). | ☐ |
+
+---
+---
+---
+## 🚀 **Summary**
+- The **root cause** is that LibreOffice’s Python environment doesn’t handle relative imports well.
+- The **fix** is to replace all relative imports with absolute imports and ensure the `vistatype` package is in `sys.path`.
+- The **batch script** can automate this for all files.
+
+If you **still** see errors, let me know:
+- The **exact error message**.
+- The **file and line number** where it occurs.
+- The **content of the file** causing the issue.
+
+I’ll help you debug further! This should resolve all import errors.

@@ -44,15 +44,27 @@ to bind to a toolbar button (Tools > Customize > Toolbars > Add > Category
 "My Macros" or similar, depending on LO version).
 """
 from __future__ import annotations
+import sys
+import os
 
-from . import shared, config, dn_tools, utils
-from .lp import (
+# --- FIX: Ensure the vistatype package is importable in LibreOffice's Python ---
+# Get the absolute path to the directory containing this file (entrypoints.py)
+this_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (Scripts/python/vistatype/ -> Scripts/python/)
+scripts_dir = os.path.dirname(this_dir)
+# Add the Scripts/python/ directory to sys.path so Python can find 'vistatype'
+if scripts_dir not in sys.path:
+    sys.path.insert(0, scripts_dir)
+
+# --- Absolute imports for the vistatype package ---
+from vistatype import shared, config, dn_tools, utils
+from vistatype.lp import (
     attach_template as lp_attach_template,
     file_cleanup as lp_file_cleanup,
     reference_pages as lp_reference_pages,
     formatting_tools as lp_formatting_tools,
 )
-from .dx import (
+from vistatype.dx import (
     reference_pages as dx_reference_pages,
     formatting_tools as dx_formatting_tools,
     file_cleanup as dx_file_cleanup,
